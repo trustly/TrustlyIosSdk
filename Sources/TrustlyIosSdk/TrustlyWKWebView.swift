@@ -27,32 +27,39 @@ import WebKit
 import SafariServices
 
 public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, SFSafariViewControllerDelegate {
-    var trustlyView: WKWebView?
-
-    public init?(checkoutUrl: String, frame: CGRect) {
+    
+    var webView: WKWebView?
+    var trustlyWKScriptHandler: TrustlyWKScriptOpenURLScheme!
+    
+    weak var delegate: TrustlyCheckoutDelegate? {
+        didSet {
+            trustlyWKScriptHandler.trustlyCheckoutDelegate = delegate
+        }
+    }
+    
+    init?(checkoutUrl: String, frame: CGRect) {
         super.init(frame: frame)
 
         let userContentController: WKUserContentController = WKUserContentController()
         let configuration: WKWebViewConfiguration = WKWebViewConfiguration()
         configuration.userContentController = userContentController
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+        
+        webView = WKWebView(frame: frame, configuration: configuration)
+        guard let webView = webView else { return nil }
 
-        trustlyView = WKWebView(frame: frame, configuration: configuration)
-        guard let trustlyView = trustlyView else { return nil }
+        webView.navigationDelegate = self
+        webView.uiDelegate = self
 
-        trustlyView.navigationDelegate = self
-        trustlyView.uiDelegate = self
-        trustlyView.navigationDelegate = self
-        trustlyView.uiDelegate = self
-
-        userContentController.add(
-            TrustlyWKScriptOpenURLScheme(webView: trustlyView), name: TrustlyWKScriptOpenURLScheme.NAME)
+        trustlyWKScriptHandler = TrustlyWKScriptOpenURLScheme(webView: webView)
+        userContentController.add(trustlyWKScriptHandler, name: TrustlyWKScriptOpenURLScheme.NAME)
+           
         if let url = URL(string: checkoutUrl) {
-            trustlyView.load(URLRequest(url: url))
-            trustlyView.allowsBackForwardNavigationGestures = true
+            webView.load(URLRequest(url: url))
+            webView.allowsBackForwardNavigationGestures = true
         }
 
-        addSubview(trustlyView)
+        addSubview(webView)
     }
 
     public required init?(coder aDecoder: NSCoder) {
