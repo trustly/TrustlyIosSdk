@@ -58,7 +58,7 @@ public class TrustlyWKScriptOpenURLScheme: NSObject, WKScriptMessageHandler {
         /// Handle the message the legacy way to ensure backwards compability.
         if let urlScheme = parsedCheckoutEventObject.object(forKey: "url") as? String {
             
-            if let url = URL(string: urlScheme), UIApplication.shared.canOpenURL(url) {ß
+            if let url = URL(string: urlScheme), UIApplication.shared.canOpenURL(url) {
                 if #available(iOS 10.0, *) {
                     UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 } else {
