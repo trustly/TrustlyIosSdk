@@ -24,7 +24,7 @@
 
 import Foundation
 
-enum TrustlyCheckoutEvent: String {
+public enum TrustlyCheckoutEvent: String {
     case openURLScheme = "onTrustlyCheckoutRedirect"
     case success = "onTrustlyCheckoutSuccess"
     case error = "onTrustlyCheckoutError"
@@ -32,7 +32,7 @@ enum TrustlyCheckoutEvent: String {
 }
 
 
-protocol TrustlyCheckoutDelegate: class {
+public protocol TrustlyCheckoutDelegate: class {
     /// Called when Checkout receives a request to open a URL Scheme.
     func onTrustlyCheckoutRequstToOpenURLScheme(urlScheme: String)
     /// Called when Checkout transaction is complete.
