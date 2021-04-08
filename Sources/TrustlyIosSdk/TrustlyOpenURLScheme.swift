@@ -24,6 +24,7 @@
 
 import Foundation
 import WebKit
+import UIKit
 
 public class TrustlyWKScriptOpenURLScheme: NSObject, WKScriptMessageHandler {
 
@@ -55,11 +56,13 @@ public class TrustlyWKScriptOpenURLScheme: NSObject, WKScriptMessageHandler {
         }
         
         /// Handle the message the legacy way to ensure backwards compability.
-        if let callback: String = parsedCheckoutEventObject.object(forKey: "callback") as? String,
-        let urlscheme: String = parsedCheckoutEventObject.object(forKey: "urlscheme") as? String
-        {
-            UIApplication.shared.openURL(NSURL(string: urlscheme)! as URL)
-            let js: String = String(format: "%@", [callback, urlscheme])
+        if let urlScheme = parsedCheckoutEventObject.object(forKey: "url") as? String {
+            
+            if let url = URL(string: urlScheme), UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
+
+            let js: String = String(format: "%@", ["", urlscheme])
             webView.evaluateJavaScript(js, completionHandler: nil)
         }
     }
