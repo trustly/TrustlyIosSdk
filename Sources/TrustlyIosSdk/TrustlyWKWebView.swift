@@ -37,7 +37,7 @@ public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, SFSaf
         }
     }
     
-    public init?(checkoutUrl: String, frame: CGRect) {
+    init?(checkoutUrl: String, frame: CGRect) {
         super.init(frame: frame)
 
         let userContentController: WKUserContentController = WKUserContentController()
