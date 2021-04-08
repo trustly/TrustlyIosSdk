@@ -31,7 +31,7 @@ public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, SFSaf
     var webView: WKWebView?
     var trustlyWKScriptHandler: TrustlyWKScriptOpenURLScheme!
     
-    weak var delegate: TrustlyCheckoutDelegate? {
+    public weak var delegate: TrustlyCheckoutDelegate? {
         didSet {
             trustlyWKScriptHandler.trustlyCheckoutDelegate = delegate
         }
