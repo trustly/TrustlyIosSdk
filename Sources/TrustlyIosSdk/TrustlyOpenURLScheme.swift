@@ -49,9 +49,26 @@ public class TrustlyWKScriptOpenURLScheme: NSObject, WKScriptMessageHandler {
             return
         }
         
+        guard let eventType = parsedCheckoutEventObject.object(forKey: "type") as? String else {
+            print("TRUSTLY SDK: Found no type property on checkout event")
+            return
+        }
+        
+        guard let trustlyCheckoutEvent = TrustlyCheckoutEvent(rawValue: eventType) else {
+            print("TRUSTLY SDK: Checkout event type not recognized")
+            return
+        }
+        
+        let url: String? = parsedCheckoutEventObject.object(forKey: "url") as? String ?? nil
+        
         /// Check if the SDK user have opted into using TrustlyCheckoutEventDelegate
         if trustlyCheckoutDelegate != nil {
-            handleCheckoutEvent(jsonObject: parsedCheckoutEventObject)
+            handleCheckoutEvent(checkoutEvent: trustlyCheckoutEvent, url: url)
+            return
+        }
+        
+        //Only allow redirect events to reach legacy code below, all other event types were introduced with the TrustlyCheckoutDelegate.
+        if trustlyCheckoutEvent != .openURLScheme {
             return
         }
         
@@ -75,21 +92,9 @@ public class TrustlyWKScriptOpenURLScheme: NSObject, WKScriptMessageHandler {
         Validate and call the correct delegate method for the event.
         - Parameter jsonObject: The json object sent from the Web Client.
     */
-    func handleCheckoutEvent(jsonObject: NSDictionary) {
+    func handleCheckoutEvent(checkoutEvent: TrustlyCheckoutEvent, url: String?) {
         
-        guard let eventType = jsonObject.object(forKey: "type") as? String else {
-            print("TRUSTLY SDK: Found no type property on checkout event")
-            return
-        }
-        
-        guard let trustlyCheckoutEvent = TrustlyCheckoutEvent(rawValue: eventType) else {
-            print("TRUSTLY SDK: Checkout event type not recognized")
-            return
-        }
-        
-        let url: String? = jsonObject.object(forKey: "url") as? String ?? nil
-    
-        switch trustlyCheckoutEvent {
+        switch checkoutEvent {
         case .openURLScheme:
             if let urlSchemeString = url as String? {
                 self.trustlyCheckoutDelegate?.onTrustlyCheckoutRequstToOpenURLScheme(urlScheme: urlSchemeString)
