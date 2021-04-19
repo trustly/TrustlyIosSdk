@@ -24,29 +24,89 @@
 
 import Foundation
 import WebKit
+import UIKit
 
-/**
- Will try to open the URL, then return result in callback
- :param: JSON
- */
 public class TrustlyWKScriptOpenURLScheme: NSObject, WKScriptMessageHandler {
 
-    public static let NAME = "trustlyOpenURLScheme"
+    weak var trustlyCheckoutDelegate: TrustlyCheckoutDelegate?
+
     var webView: WKWebView
 
-    public init(webView: WKWebView) {
+    /// Name of the "native bridge" that will be used to communicate with the web view.
+    public static let NAME = "trustlySDKBridge"
+    
+    init(webView: WKWebView) {
         self.webView = webView
     }
-
+    
+    /**
+        Function to handle messages from the web client rendered in the Web View.
+     */
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        if let parsed = getParsedJSON(object: message.body as AnyObject),
-        let callback: String = parsed.object(forKey: "callback") as? String,
-        let urlscheme: String = parsed.object(forKey: "urlscheme") as? String
-        {
-            UIApplication.shared.openURL(NSURL(string: urlscheme)! as URL)
-            let js: String = String(format: "%@", [callback, urlscheme])
+        
+        guard let parsedCheckoutEventObject = getParsedJSON(object: message.body as AnyObject) else {
+            print("TRUSTLY SDK: Message posted from script handler has an invalid format")
+            return
+        }
+        
+        guard let eventType = parsedCheckoutEventObject.object(forKey: "type") as? String else {
+            print("TRUSTLY SDK: Found no type property on checkout event")
+            return
+        }
+        
+        guard let trustlyCheckoutEvent = TrustlyCheckoutEvent(rawValue: eventType) else {
+            print("TRUSTLY SDK: Checkout event type not recognized")
+            return
+        }
+        
+        let url: String? = parsedCheckoutEventObject.object(forKey: "url") as? String ?? nil
+        
+        /// Check if the SDK user have opted into using TrustlyCheckoutEventDelegate
+        if trustlyCheckoutDelegate != nil {
+            handleCheckoutEvent(checkoutEvent: trustlyCheckoutEvent, url: url)
+            return
+        }
+        
+        //Only allow redirect events to reach legacy code below, all other event types were introduced with the TrustlyCheckoutDelegate.
+        if trustlyCheckoutEvent != .openURLScheme {
+            return
+        }
+        
+        /// Handle the message the legacy way to ensure backwards compability.
+        if let urlScheme = parsedCheckoutEventObject.object(forKey: "url") as? String {
+            
+            if let url = URL(string: urlScheme) {
+                if #available(iOS 10.0, *) {
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                } else {
+                    UIApplication.shared.openURL(url)
+                }
+            }
+
+            let js: String = String(format: "%@", ["", urlScheme])
             webView.evaluateJavaScript(js, completionHandler: nil)
         }
+    }
+    
+    /**
+        Validate and call the correct delegate method for the event.
+        - Parameter jsonObject: The json object sent from the Web Client.
+    */
+    func handleCheckoutEvent(checkoutEvent: TrustlyCheckoutEvent, url: String?) {
+        
+        switch checkoutEvent {
+        case .openURLScheme:
+            if let urlSchemeString = url as String? {
+                self.trustlyCheckoutDelegate?.onTrustlyCheckoutRequstToOpenURLScheme(urlScheme: urlSchemeString)
+            }
+        case .success:
+            self.trustlyCheckoutDelegate?.onTrustlyCheckoutSuccessfull(urlString: url)
+        case .error:
+            self.trustlyCheckoutDelegate?.onTrustlyCheckoutError()
+        case .abort:
+            self.trustlyCheckoutDelegate?.onTrustlyCheckoutAbort(urlString: url)
+        }
+        
     }
 
     /**
