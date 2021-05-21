@@ -2,6 +2,8 @@
 
 The Trustly iOS SDK provides an easy way to implement the Trustly Checkout in your iOS app. The SDK handles communication with the Web View and exposes Checkout events that allows you to customize your Checkout flow. 
 
+**`Note: The latest version of the SDK does not support the older version of the Trustly Checkout. If you do use the older version of the Checkout, please use version 2.0.0 of the SDK. If you are not sure what version of the Trustly Checkout you are using, please contact our intergration support.`**
+
 ## Integration
 Add the SDK as a Swift Package. [More detailed intructions can be found here.](https://www.trustly.net/site/developer-portal?part=iosandroid)
 1. Navigate to File -> Swift Packages -> Add Package Dependency.
@@ -46,6 +48,7 @@ class ViewController: UIViewController, TrustlyCheckoutDelegate {
     }
 }
 ```
+**Note: If you choose to subscribe for TrustlyCheckoutEvents you will need to handle all opening of third party applications yourself!**
 
 ## Notes about URLScheme
 Please note that when rendering the Trustly Checkout from a native app you are required to pass your application’s [URLScheme](https://developer.apple.com/documentation/xcode/allowing_apps_and_websites_to_link_to_your_content/defining_a_custom_url_scheme_for_your_app) as an attribute to the order initiation request. By doing so, Trustly can redirect users back to your app after using external identification apps such as Mobile BankID. You can pass your URLScheme by including it in the "URLScheme" attribute when making an API call to Trustly. [You can read more about it here.](https://www.trustly.net/site/developer-portal?part=iosandroid)
