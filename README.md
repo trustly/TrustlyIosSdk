@@ -17,8 +17,10 @@ Pass your Checkout URL when initialising a new TrustlyWKWebView instance. The Ch
 
 Example usage:
 ```swift
-let trustlyWebView = TrustlyWKWebView(checkoutUrl: trustlyCheckoutURLString, frame: self.view.frame)
-self.view = trustlyWebView 
+let webViewController = UIViewController.init(nibName: nil, bundle: nil)
+let mainView = TrustlyWKWebView(checkoutUrl: checkoutUrl.absoluteString, frame: self.view.bounds)
+webViewController.view = mainView
+show(webViewController, sender: nil)
 ```
 ### Receiving Checkout Events
 If you want more control of your Checkout flow you can choose to opt-in to receiving and handling Checkout events. 
@@ -48,7 +50,40 @@ class ViewController: UIViewController, TrustlyCheckoutDelegate {
     }
 }
 ```
-**Note: If you choose to subscribe for TrustlyCheckoutEvents you will need to handle all opening of third party applications yourself!**
+
+## Handling TrustlyCheckoutEvents
+If  you have assigned delegate for TrustlyCheckoutEvents, when a redirect happens in
+
+```onTrustlyCheckoutRequstToOpenURLScheme(urlScheme: String)```
+
+ you will need to handle opening of third party applications yourself.
+
+In this case do not use
+```canOpenURL(_:)``` to inspect if there is an app available to handle the URL scheme.
+This method will always return false on devices runing after iOS 9.0 unless the queried scheme is added in the Info.plist under the ```LSApplicationQueriesSchemes``` key.
+
+Prefer using
+
+```open(_:options:completionHandler:)```
+
+and handle the case of no application installed in the completion handler.
+Sample code bellow
+
+```swift
+func onTrustlyCheckoutRequstToOpenURLScheme(urlScheme: String) {
+
+        if let url = URL(string: urlScheme) {
+            UIApplication.shared.open(url, options: [:])
+            { opened in
+                if (!opened) {
+                    // No third party application installed.
+                    // Add code for correct handling.
+                }
+            }
+        }
+    }
+
+```
 
 ## Notes about URLScheme
-Please note that when rendering the Trustly Checkout from a native app you are required to pass your application’s [URLScheme](https://developer.apple.com/documentation/xcode/allowing_apps_and_websites_to_link_to_your_content/defining_a_custom_url_scheme_for_your_app) as an attribute to the order initiation request. By doing so, Trustly can redirect users back to your app after using external identification apps such as Mobile BankID. You can pass your URLScheme by including it in the "URLScheme" attribute when making an API call to Trustly. [You can read more about it here.](https://www.trustly.net/site/developer-portal?part=iosandroid)
+Please note that when rendering the Trustly Checkout from a native app you are required to pass your application’s [URLScheme](https://developer.apple.com/documentation/xcode/allowing_apps_and_websites_to_link_to_your_content/defining_a_custom_url_scheme_for_your_app) as an attribute to the order initiation request. By doing so, Trustly can redirect users back to your app after using external identification apps such as Mobile BankID. You can pass your URLScheme by including it in the "URLScheme" attribute when making an API call to Trustly. [You can read more about it here.](https://developers.trustly.com/emea/docs/ios)
