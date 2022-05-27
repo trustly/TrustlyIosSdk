@@ -18,7 +18,7 @@ Pass your Checkout URL when initialising a new TrustlyWKWebView instance. The Ch
 Example usage:
 ```swift
 let webViewController = UIViewController.init(nibName: nil, bundle: nil)
-let mainView = TrustlyWKWebView(checkoutUrl: checkoutUrl.absoluteString, frame: self.view.bounds)
+let mainView = TrustlyWKWebView(checkoutUrl: your_trustly_checkout_url.absoluteString, frame: self.view.bounds)
 webViewController.view = mainView
 show(webViewController, sender: nil)
 ```
