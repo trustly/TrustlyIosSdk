@@ -5,7 +5,7 @@ The Trustly iOS SDK provides an easy way to implement the Trustly Checkout in yo
 **`Note: The latest version of the SDK does not support the older version of the Trustly Checkout. If you do use the older version of the Checkout, please use version 2.0.0 of the SDK. If you are not sure what version of the Trustly Checkout you are using, please contact our intergration support.`**
 
 ## Integration
-Add the SDK as a Swift Package. [More detailed intructions can be found here.](https://www.trustly.net/site/developer-portal?part=iosandroid)
+Add the SDK as a Swift Package. [More detailed instructions can be found here.](https://eu.developers.trustly.com/doc/docs/ios)
 1. Navigate to File -> Swift Packages -> Add Package Dependency.
 2. Paste the Trustly SDK URL: https://github.com/trustly/TrustlyIosSdk
 3. Select Up to Next Major version and make sure you have the latest version
