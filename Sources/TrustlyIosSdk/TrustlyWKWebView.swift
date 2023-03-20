@@ -51,7 +51,7 @@ public typealias TrustlyWebViewOnAbort = () -> Void
 ///  or `FailURL` for error and abort events. The value of these parameters is passed by your backend API call to the
 ///  Trustly backend.
 /// - See  https://eu.developers.trustly.com/doc/docs/order-initiation
-public class TrustlyWKWebView: UIView, TrustlyWKScriptHandlerDelegate  {
+public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, TrustlyWKScriptHandlerDelegate  {
 
     /// Custom closure that will be invoked when the Trustly checkout has successfully completed an order.
     public var onSuccess: TrustlyWebViewOnSuccess?
@@ -62,19 +62,24 @@ public class TrustlyWKWebView: UIView, TrustlyWKScriptHandlerDelegate  {
 
     var webView: WKWebView?
     var trustlyWKScriptHandler: TrustlyWKScriptHandler!
-    var configuration: WKWebViewConfiguration!
 
     public init?(checkoutUrl: String, frame: CGRect) {
         super.init(frame: frame)
 
-        configuration = WKWebViewConfiguration()
+        let userContentController: WKUserContentController = WKUserContentController()
+        let configuration: WKWebViewConfiguration = WKWebViewConfiguration()
+        configuration.userContentController = userContentController
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+        
         webView = WKWebView(frame: frame, configuration: configuration)
         guard let webView = webView else { return nil }
 
-        trustlyWKScriptHandler = TrustlyWKScriptHandler(delegate: self)
-        configuration.userContentController.add(trustlyWKScriptHandler, name: TrustlyWKScriptHandler.NAME)
+        webView.navigationDelegate = self
+        webView.uiDelegate = self
 
+        trustlyWKScriptHandler = TrustlyWKScriptHandler(webView: webView, delegate: self)
+        userContentController.add(trustlyWKScriptHandler, name: TrustlyWKScriptHandler.NAME)
+           
         if let url = URL(string: checkoutUrl) {
             webView.load(URLRequest(url: url))
             webView.allowsBackForwardNavigationGestures = true
@@ -85,10 +90,6 @@ public class TrustlyWKWebView: UIView, TrustlyWKScriptHandlerDelegate  {
 
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    deinit {
-        configuration.userContentController.removeScriptMessageHandler(forName: TrustlyWKScriptHandler.NAME)
     }
 
     internal func trustlyWKScriptHandlerOnSuccess() {
