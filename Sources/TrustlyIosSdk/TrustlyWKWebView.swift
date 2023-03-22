@@ -62,19 +62,19 @@ public class TrustlyWKWebView: UIView, TrustlyWKScriptHandlerDelegate  {
 
     var webView: WKWebView?
     var trustlyWKScriptHandler: TrustlyWKScriptHandler!
+    var configuration: WKWebViewConfiguration!
 
     public init?(checkoutUrl: String, frame: CGRect) {
         super.init(frame: frame)
 
-        let configuration: WKWebViewConfiguration = WKWebViewConfiguration()
+        configuration = WKWebViewConfiguration()
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
-        
         webView = WKWebView(frame: frame, configuration: configuration)
         guard let webView = webView else { return nil }
 
-        trustlyWKScriptHandler = TrustlyWKScriptHandler(webView: webView, delegate: self)
+        trustlyWKScriptHandler = TrustlyWKScriptHandler(delegate: self)
         configuration.userContentController.add(trustlyWKScriptHandler, name: TrustlyWKScriptHandler.NAME)
-           
+
         if let url = URL(string: checkoutUrl) {
             webView.load(URLRequest(url: url))
             webView.allowsBackForwardNavigationGestures = true
@@ -85,6 +85,10 @@ public class TrustlyWKWebView: UIView, TrustlyWKScriptHandlerDelegate  {
 
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        configuration.userContentController.removeScriptMessageHandler(forName: TrustlyWKScriptHandler.NAME)
     }
 
     internal func trustlyWKScriptHandlerOnSuccess() {
