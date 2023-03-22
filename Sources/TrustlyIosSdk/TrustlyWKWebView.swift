@@ -24,36 +24,57 @@
 
 import UIKit
 import WebKit
-import SafariServices
 
-public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, SFSafariViewControllerDelegate {
-    
+
+/// Invoked when the TrustlyWebView has successfully completed an order.
+///
+/// - Note: The webview will not autoclose and you can use this closure to dismiss the web view yourself.
+public typealias TrustlyWebViewOnSuccess = () -> Void
+
+/// Invoked when the TrustlyWebView has encountered an error.
+///
+/// - Note: The webview will not autoclose and you can use this closure to dismiss the web view yourself.
+public typealias TrustlyWebViewOnError = () -> Void
+
+/// Invoked when the TrustlyWebView flow was aborted by the user.
+///
+/// - Note: The webview will not autoclose and you can use this closure to dismiss the web view yourself.
+public typealias TrustlyWebViewOnAbort = () -> Void
+
+
+/// A wrapper around WKWebView allowing communication with the Trustly checkout.
+///
+/// The checkout passes events (success, error and abort)  to the web view. T
+/// Through `onSuccess`, `onAbort` and `onError` variables you you can provide your own
+/// custom logic for those events
+/// - Note if no custom event handling is provided, the web view will load the `SuccessURL` for success events
+///  or `FailURL` for error and abort events. The value of these parameters is passed by your backend API call to the
+///  Trustly backend.
+/// - See  https://eu.developers.trustly.com/doc/docs/order-initiation
+public class TrustlyWKWebView: UIView, TrustlyWKScriptHandlerDelegate  {
+
+    /// Custom closure that will be invoked when the Trustly checkout has successfully completed an order.
+    public var onSuccess: TrustlyWebViewOnSuccess?
+    /// Custom closure that will be invoked when the Trustly checkout has encountered an error.
+    public var onError: TrustlyWebViewOnError?
+    /// Custom closure that will be invoked when the Trustly checkout was aborted by end user.
+    public var onAbort: TrustlyWebViewOnAbort?
+
     var webView: WKWebView?
-    var trustlyWKScriptHandler: TrustlyWKScriptOpenURLScheme!
-    
-    public weak var delegate: TrustlyCheckoutDelegate? {
-        didSet {
-            trustlyWKScriptHandler.trustlyCheckoutDelegate = delegate
-        }
-    }
-    
+    var trustlyWKScriptHandler: TrustlyWKScriptHandler!
+    var configuration: WKWebViewConfiguration!
+
     public init?(checkoutUrl: String, frame: CGRect) {
         super.init(frame: frame)
 
-        let userContentController: WKUserContentController = WKUserContentController()
-        let configuration: WKWebViewConfiguration = WKWebViewConfiguration()
-        configuration.userContentController = userContentController
+        configuration = WKWebViewConfiguration()
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
-        
         webView = WKWebView(frame: frame, configuration: configuration)
         guard let webView = webView else { return nil }
 
-        webView.navigationDelegate = self
-        webView.uiDelegate = self
+        trustlyWKScriptHandler = TrustlyWKScriptHandler(delegate: self)
+        configuration.userContentController.add(trustlyWKScriptHandler, name: TrustlyWKScriptHandler.NAME)
 
-        trustlyWKScriptHandler = TrustlyWKScriptOpenURLScheme(webView: webView)
-        userContentController.add(trustlyWKScriptHandler, name: TrustlyWKScriptOpenURLScheme.NAME)
-           
         if let url = URL(string: checkoutUrl) {
             webView.load(URLRequest(url: url))
             webView.allowsBackForwardNavigationGestures = true
@@ -66,17 +87,26 @@ public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, SFSaf
         fatalError("init(coder:) has not been implemented")
     }
 
-    public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-
-        if navigationAction.targetFrame == nil {
-            if let parentViewController: UIViewController = UIApplication.shared.keyWindow?.rootViewController,
-                let url = navigationAction.request.url {
-                    let safariView = SFSafariViewController(url: url)
-                    parentViewController.present(safariView, animated: true, completion: nil)
-                    safariView.delegate = self
-            }
-        }
-
-        return nil
+    deinit {
+        configuration.userContentController.removeScriptMessageHandler(forName: TrustlyWKScriptHandler.NAME)
     }
+
+    internal func trustlyWKScriptHandlerOnSuccess() {
+        if let onSuccess = onSuccess {
+            onSuccess()
+        }
+    }
+
+    internal func trustlyWKScriptHandlerOnError() {
+        if let onError = onError {
+            onError()
+        }
+    }
+
+    internal func trustlyWKScriptHandlerOnAbort() {
+        if let onAbort = onAbort {
+            onAbort()
+        }
+    }
+
 }
