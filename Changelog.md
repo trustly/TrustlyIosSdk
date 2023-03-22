@@ -9,3 +9,5 @@
 ### Added
 - Possibility for custom handlers for `.onSuccess`, `.onError` and `.onAbort` by providing closures. It's now possible to pick and choose for which events you want to provide custom handlers.
 
+### Fixed
+- Memory leak caused by reference cycle + improper clean up  of `WKWebViewConfiguration` script handlers
