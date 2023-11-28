@@ -1,7 +1,7 @@
 # Changelog
 
 ## [4.0.1] - 2023-11-28
-- Add setReturnedFromApp() method to TrustlyWKWebView. Can be called when Merchant-App is opened by urlscheme for a better user experience. This is an optional feature to implement.
+- Add setReturnedFromApp() method to TrustlyWKWebView. Can be called when Merchant-App is opened by urlscheme for a better user experience. This is an optional feature that is not yet rolled out in all Trustly products.
 
 ## [4.0.0] - 2023-03-21
 

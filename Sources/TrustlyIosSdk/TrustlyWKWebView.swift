@@ -90,6 +90,7 @@ public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, Trust
     
     static let IS_RETURN_FROM_APP = "isReturnFromApp"
     
+    // Only supported from v4.0.1 and up
     public func setReturnedFromApp() {
         if let checkoutUrl = webView?.url?.absoluteString {
             
