@@ -87,6 +87,22 @@ public class TrustlyWKWebView: UIView, WKNavigationDelegate, WKUIDelegate, Trust
 
         addSubview(webView)
     }
+    
+    static let IS_RETURN_FROM_APP = "isReturnFromApp"
+    
+    public func setReturnedFromApp() {
+        if let checkoutUrl = webView?.url?.absoluteString {
+            
+            // Append a random number to the hash param to ensure we skip page reloads
+            let randomString = String(Int.random(in: 0..<Int.max))
+            let separator = checkoutUrl.contains("#") ? "&" : "#"
+            let checkoutUrlWithHash = "\(checkoutUrl)\(separator)\(TrustlyWKWebView.IS_RETURN_FROM_APP)=\(randomString)"
+            
+            if let url = URL(string: checkoutUrlWithHash) {
+                webView?.load(URLRequest(url: url))
+            }
+        }
+    }
 
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
